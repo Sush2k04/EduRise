@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookOpen, Users, Coins, ArrowRight, Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -9,7 +10,7 @@ const Hero = () => {
           <div className="space-y-8">
             <div className="space-y-6">
               <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-                Your AI-Powered
+                Peer-to-Peer
                 <span className="block bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                   Learning Exchange
                 </span>
@@ -22,24 +23,24 @@ const Hero = () => {
             
             <div className="flex flex-col sm:flex-row gap-4">
               <button className="bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4 rounded-full font-semibold text-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
-                Start Learning <ArrowRight className="w-5 h-5 ml-2" />
+               <Link to="/start-learning" className='flex items-center justify-center'> Start Learning <ArrowRight className="w-5 h-5 ml-2" /></Link>
               </button>
-              <button className="border border-purple-500 px-8 py-4 rounded-full font-semibold text-lg hover:bg-purple-500/10 transition-all duration-300 flex items-center justify-center">
-                <Play className="w-5 h-5 mr-2" /> Watch Demo
+              <button className="">
+                <Link to="/watchdemo" className='border border-purple-500 px-8 py-4 rounded-full font-semibold text-lg hover:bg-purple-500/10 transition-all duration-300 flex items-center justify-center' > <Play className="w-5 h-5 mr-2" /> Watch Demo </Link>
               </button>
             </div>
 
             <div className="flex items-center space-x-8 pt-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-400">10K+</div>
+                <div className="text-3xl font-bold text-purple-400">10+</div>
                 <div className="text-sm text-gray-400">Active Learners</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-pink-400">500+</div>
+                <div className="text-3xl font-bold text-pink-400">100+</div>
                 <div className="text-sm text-gray-400">Skills Available</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-400">50K+</div>
+                <div className="text-3xl font-bold text-blue-400">10+</div>
                 <div className="text-sm text-gray-400">Sessions Completed</div>
               </div>
             </div>

@@ -35,6 +35,13 @@ const Navigation = () => {
               <a href="#how-it-works" className="hover:text-purple-400 transition-colors">How it Works</a>
               <a href="#pricing" className="hover:text-purple-400 transition-colors">Pricing</a>
               <a href="#testimonials" className="hover:text-purple-400 transition-colors">Reviews</a>
+              {user && (
+                <>
+                  <Link to="/profile" className="hover:text-purple-400 transition-colors">Profile</Link>
+                  <Link to="/matches" className="hover:text-purple-400 transition-colors">Matches</Link>
+                  <Link to="/sessions" className="hover:text-purple-400 transition-colors">Sessions</Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -82,6 +89,13 @@ const Navigation = () => {
             <a href="#how-it-works" className="block px-3 py-2 hover:text-purple-400">How it Works</a>
             <a href="#pricing" className="block px-3 py-2 hover:text-purple-400">Pricing</a>
             <a href="#testimonials" className="block px-3 py-2 hover:text-purple-400">Reviews</a>
+            {user && (
+              <>
+                <Link to="/profile" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Profile</Link>
+                <Link to="/matches" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Matches</Link>
+                <Link to="/sessions" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Sessions</Link>
+              </>
+            )}
             <div className="pt-4 pb-3 border-t border-purple-500/20">
               {user ? (
                 <>

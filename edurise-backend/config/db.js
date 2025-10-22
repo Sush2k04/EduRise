@@ -13,4 +13,4 @@ export async function connectDB(uri) {
   }
 }
 
-export default mongoose;
+export default mongoose;    

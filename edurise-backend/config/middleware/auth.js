@@ -12,3 +12,5 @@ export function auth(req, res, next) {
     return res.status(401).json({ msg: 'Token is not valid' });
   }
 }
+
+export default auth;

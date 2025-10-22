@@ -50,6 +50,27 @@ export const authAPI = {
   getMatches: () => apiCall('/match')
 };
 
+// Session API calls
+export const sessionAPI = {
+  create: ({ skill, sessionType, scheduledDuration }) =>
+    apiCall('/session/create', {
+      method: 'POST',
+      body: JSON.stringify({ skill, sessionType, scheduledDuration })
+    }),
+
+  getActive: () => apiCall('/session/active'),
+
+  join: (id) => apiCall(`/session/${id}/join`, { method: 'PUT' }),
+
+  end: (id, { feedback, notes } = {}) =>
+    apiCall(`/session/${id}/end`, {
+      method: 'PUT',
+      body: JSON.stringify({ feedback, notes })
+    }),
+
+  getHistory: () => apiCall('/session/history')
+};
+
 // Check if user is authenticated
 export const isAuthenticated = () => {
   return !!localStorage.getItem('token');

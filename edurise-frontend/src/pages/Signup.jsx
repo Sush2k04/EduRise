@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BookOpen, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { authAPI, setAuthData } from '../services/api';
+import Navbar from '../components/Navbar';
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -60,6 +61,7 @@ const Signup = () => {
   return (
     <div className="min-h-screen flex flex-col pt-16">
       {/* Signup Form */}
+      <Navbar />
       <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8">
           <div>
