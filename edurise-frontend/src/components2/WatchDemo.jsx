@@ -184,8 +184,8 @@ const WatchDemo = () => {
                 <div className="text-sm text-gray-400">Live Viewers</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-pink-400">95%</div>
-                <div className="text-sm text-gray-400">Satisfaction</div>
+                <div className="text-2xl font-bold text-pink-400">5%</div>
+                <div className="text-sm text-gray-400">Distraction level</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-400">4.9</div>

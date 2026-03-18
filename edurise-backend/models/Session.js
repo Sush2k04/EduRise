@@ -164,7 +164,6 @@ SessionSchema.methods.addChatMessage = function(senderId, message) {
   return this.save();
 };
 
-// Method to add note
 SessionSchema.methods.addNote = function(authorId, noteData) {
   this.notes.push({
     author: authorId,

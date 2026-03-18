@@ -6,12 +6,10 @@ import Profile from '../models/Profile.js';
 
 const router = express.Router();
 
-// Register
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
-    // Validation
     if (!name || !email || !password) {
       return res.status(400).json({ msg: 'Please enter all fields' });
     }
@@ -20,17 +18,14 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ msg: 'Password must be at least 6 characters' });
     }
 
-    // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ msg: 'User already exists with this email' });
     }
 
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
     const user = await User.create({ 
       name, 
       email, 
