@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import Navigation from '../components/Navigation';
 import { sessionAPI } from '../services/api';
+import { getCurrentUser } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const Sessions = () => {
+	const navigate = useNavigate();
 	const [creating, setCreating] = useState(false);
 	const [error, setError] = useState('');
 	const [active, setActive] = useState([]);
@@ -52,8 +55,21 @@ const Sessions = () => {
 		}
 	};
 
-	const join = async (id) => { await sessionAPI.join(id); await load(); };
+	const join = async (id) => {
+		try {
+			setError('');
+			await sessionAPI.join(id);
+			const s = await sessionAPI.getById(id).catch(() => null);
+			await load();
+			// Open the call UI
+			navigate(`/session/${id}`, { state: { sessionData: s || { skill: 'Peer Learning' }, userRole: 'learner' } });
+		} catch (e) {
+			setError(e.message);
+		}
+	};
 	const end = async (id) => { await sessionAPI.end(id); await load(); };
+	const me = getCurrentUser();
+	const myId = me?.id;
 
 	return (
 		<div className="min-h-screen pt-16">
@@ -99,7 +115,9 @@ const Sessions = () => {
 										<div className="text-sm text-gray-400">Scheduled {s.duration?.scheduled} min</div>
 									</div>
 									<div className="space-x-2">
-										<button onClick={() => join(s._id)} className="px-3 py-1 rounded bg-purple-600">Join</button>
+											<button onClick={() => join(s._id)} className="px-3 py-1 rounded bg-purple-600">
+												{s.instructor?._id === myId ? 'Start' : 'Join'}
+											</button>
 										<button onClick={() => end(s._id)} className="px-3 py-1 rounded bg-pink-600">End</button>
 									</div>
 								</div>

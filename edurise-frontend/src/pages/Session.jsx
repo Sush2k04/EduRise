@@ -21,7 +21,10 @@ import {
   Clock,
   Wifi
 } from 'lucide-react';
-import io from 'socket.io-client';
+import { getCurrentUser as getStoredUser } from '../services/api';
+import { tddsAPI } from '../services/api';
+import { getSocket } from '../services/socket';
+import { sessionAPI } from '../services/api';
 
 // Import our existing components
 import ChatSection from '../components2/ChatSection';
@@ -36,13 +39,15 @@ const Session = () => {
   const [socket, setSocket] = useState(null);
   const [activeTab, setActiveTab] = useState('chat');
   const [sessionData, setSessionData] = useState(location.state?.sessionData || null);
-  const [userRole, setUserRole] = useState(location.state?.userRole || 'learner');
+  const [userRole] = useState(location.state?.userRole || 'learner');
+  const [sessionLoadError, setSessionLoadError] = useState('');
   
   // WebRTC states
   const [localStream, setLocalStream] = useState(null);
-  const [remoteStream, setRemoteStream] = useState(null);
-  const [peerConnection, setPeerConnection] = useState(null);
+  const pcRef = useRef(null);
+  const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isInitiator, setIsInitiator] = useState(false);
   
   // Media states
   const [isMicOn, setIsMicOn] = useState(false);
@@ -53,6 +58,10 @@ const Session = () => {
   const [sessionStatus, setSessionStatus] = useState('connecting');
   const [sessionTimer, setSessionTimer] = useState(0);
   const [connectionQuality, setConnectionQuality] = useState('good');
+  const [tddsResult, setTddsResult] = useState(null);
+  const [tddsRecording, setTddsRecording] = useState(false);
+  const [tddsTranscript, setTddsTranscript] = useState('');
+  const [sessionLoading, setSessionLoading] = useState(false);
 
   // Refs
   const localVideoRef = useRef(null);
@@ -74,6 +83,28 @@ const Session = () => {
   }, []);
 
   useEffect(() => {
+    // If page was opened directly (no navigation state), fetch session data
+    (async () => {
+      if (sessionData) return;
+      try {
+        setSessionLoading(true);
+        setSessionLoadError('');
+        const s = await sessionAPI.getById(sessionId);
+        // Normalize for UI: prefer skill.name
+        setSessionData({
+          ...s,
+          skill: s?.skill?.name || s?.topic || 'Peer Learning',
+          tokenRate: s?.tokenRate
+        });
+      } catch (e) {
+        setSessionLoadError(e.message);
+      } finally {
+        setSessionLoading(false);
+      }
+    })();
+  }, [sessionId]);
+
+  useEffect(() => {
     let interval;
     if (sessionStatus === 'active') {
       interval = setInterval(() => {
@@ -86,8 +117,9 @@ const Session = () => {
   const initializeSession = async () => {
     try {
       // Initialize socket connection
-      const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+      const newSocket = getSocket();
       setSocket(newSocket);
+      socketRef.current = newSocket;
 
       // Join session room
       newSocket.emit('join-session', {
@@ -103,7 +135,7 @@ const Session = () => {
       setupSocketListeners(newSocket);
       
       // Initialize WebRTC
-      await initializeWebRTC();
+      await initializeWebRTC(newSocket);
       
     } catch (error) {
       console.error('Failed to initialize session:', error);
@@ -112,8 +144,12 @@ const Session = () => {
   };
 
   const setupSocketListeners = (socket) => {
-    socket.on('user-joined-session', (data) => {
-      console.log('User joined:', data);
+    socket.on('session-joined', (data) => {
+      // The second participant to join becomes the initiator (creates offer)
+      setIsInitiator(data?.participants === 2);
+    });
+
+    socket.on('user-joined-session', () => {
       setSessionStatus('active');
     });
 
@@ -129,22 +165,22 @@ const Session = () => {
       await handleIceCandidate(data.candidate);
     });
 
-    socket.on('session-ended', (data) => {
+    socket.on('session-ended', () => {
       setSessionStatus('ended');
       // Show session summary or redirect
     });
   };
 
-  const initializeWebRTC = async () => {
+  const initializeWebRTC = async (socketForIce) => {
     try {
       // Create peer connection
       const pc = new RTCPeerConnection(rtcConfig);
-      setPeerConnection(pc);
+      pcRef.current = pc;
 
       // Set up peer connection event listeners
       pc.onicecandidate = (event) => {
-        if (event.candidate && socket) {
-          socket.emit('webrtc-ice-candidate', {
+        if (event.candidate && socketForIce) {
+          socketForIce.emit('webrtc-ice-candidate', {
             sessionId,
             candidate: event.candidate
           });
@@ -152,7 +188,6 @@ const Session = () => {
       };
 
       pc.ontrack = (event) => {
-        setRemoteStream(event.streams[0]);
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = event.streams[0];
         }
@@ -166,14 +201,14 @@ const Session = () => {
       };
 
       // Get user media
-      await getUserMedia();
+      await getUserMedia(pc);
       
     } catch (error) {
       console.error('WebRTC initialization failed:', error);
     }
   };
 
-  const getUserMedia = async () => {
+  const getUserMedia = async (pc) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -186,11 +221,9 @@ const Session = () => {
       }
 
       // Add stream to peer connection
-      if (peerConnection) {
-        stream.getTracks().forEach(track => {
-          peerConnection.addTrack(track, stream);
-        });
-      }
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
 
       setIsMicOn(true);
       setIsVideoOn(true);
@@ -200,13 +233,15 @@ const Session = () => {
     }
   };
 
-  const handleOffer = async (offer, from) => {
+  const handleOffer = async (offer) => {
     try {
-      await peerConnection.setRemoteDescription(offer);
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
+      const pc = pcRef.current;
+      if (!pc) return;
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
       
-      socket.emit('webrtc-answer', {
+      socketRef.current?.emit('webrtc-answer', {
         sessionId,
         answer
       });
@@ -217,7 +252,9 @@ const Session = () => {
 
   const handleAnswer = async (answer) => {
     try {
-      await peerConnection.setRemoteDescription(answer);
+      const pc = pcRef.current;
+      if (!pc) return;
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
     } catch (error) {
       console.error('Handle answer failed:', error);
     }
@@ -225,7 +262,9 @@ const Session = () => {
 
   const handleIceCandidate = async (candidate) => {
     try {
-      await peerConnection.addIceCandidate(candidate);
+      const pc = pcRef.current;
+      if (!pc) return;
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
     } catch (error) {
       console.error('Handle ICE candidate failed:', error);
     }
@@ -233,10 +272,12 @@ const Session = () => {
 
   const startCall = async () => {
     try {
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
+      const pc = pcRef.current;
+      if (!pc) return;
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
       
-      socket.emit('webrtc-offer', {
+      socketRef.current?.emit('webrtc-offer', {
         sessionId,
         offer
       });
@@ -244,6 +285,16 @@ const Session = () => {
       console.error('Start call failed:', error);
     }
   };
+
+  useEffect(() => {
+    // Auto-start call when active and you're the initiator
+    if (sessionStatus !== 'active') return;
+    if (!isInitiator) return;
+    if (!pcRef.current) return;
+    if (!localStream) return;
+    if (pcRef.current.signalingState !== 'stable') return;
+    startCall();
+  }, [sessionStatus, isInitiator, localStream]);
 
   const toggleMic = () => {
     if (localStream) {
@@ -272,7 +323,7 @@ const Session = () => {
         const videoTrack = screenStream.getVideoTracks()[0];
         
         // Replace video track in peer connection
-        const sender = peerConnection.getSenders().find(s => 
+        const sender = pcRef.current?.getSenders().find(s => 
           s.track && s.track.kind === 'video'
         );
         
@@ -292,7 +343,7 @@ const Session = () => {
         };
       } else {
         // Stop screen sharing and switch back to camera
-        const sender = peerConnection.getSenders().find(s => 
+        const sender = pcRef.current?.getSenders().find(s => 
           s.track && s.track.kind === 'video'
         );
         
@@ -320,12 +371,7 @@ const Session = () => {
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
     }
-    if (peerConnection) {
-      peerConnection.close();
-    }
-    if (socket) {
-      socket.close();
-    }
+    if (pcRef.current) pcRef.current.close();
   };
 
   const formatTime = (seconds) => {
@@ -334,11 +380,91 @@ const Session = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getCurrentUser = () => ({
-    id: 'current-user',
-    name: 'Your Name',
-    avatar: '🧑‍💻'
-  });
+  const getCurrentUser = () => {
+    const u = getStoredUser();
+    return {
+      id: u?.id || 'anonymous',
+      name: u?.name || 'Anonymous',
+      avatar: u?.avatar || '🧑‍💻'
+    };
+  };
+
+  const getSkillLabel = () => {
+    const s = sessionData?.skill;
+    if (!s) return sessionData?.topic || 'Peer Learning';
+    if (typeof s === 'string') return s;
+    if (typeof s === 'object') return s?.name || sessionData?.topic || 'Peer Learning';
+    return sessionData?.topic || 'Peer Learning';
+  };
+
+  const runTddsCheck = async () => {
+    const topic = getSkillLabel() || 'General';
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    // Fallback when speech-to-text isn’t available
+    if (!SpeechRecognition) {
+      const transcript = window.prompt('Speech-to-text not supported here. Paste transcript text.');
+      if (!transcript) return;
+      try {
+        const res = await tddsAPI.evaluate({ topic, transcript, sessionId });
+        setTddsResult(res);
+        setTddsTranscript(transcript);
+      } catch (e) {
+        alert(e.message);
+      }
+      return;
+    }
+
+    // Toggle: if already recording, ignore (we auto-stop on speech end)
+    if (tddsRecording) return;
+
+    setTddsResult(null);
+    setTddsTranscript('');
+    setTddsRecording(true);
+
+    const recog = new SpeechRecognition();
+    recog.lang = 'en-US';
+    recog.interimResults = true;
+    recog.continuous = false; // stop after you finish speaking
+
+    let finalText = '';
+
+    recog.onresult = (event) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const chunk = event.results[i][0]?.transcript || '';
+        if (event.results[i].isFinal) finalText += chunk;
+        else interim += chunk;
+      }
+      setTddsTranscript((finalText + ' ' + interim).trim());
+    };
+
+    recog.onerror = () => {
+      setTddsRecording(false);
+      alert('Speech recognition failed. Check mic permissions and try again.');
+    };
+
+    recog.onend = async () => {
+      setTddsRecording(false);
+      const transcript = (finalText || tddsTranscript).trim();
+      if (!transcript) return;
+      try {
+        const res = await tddsAPI.evaluate({ topic, transcript, sessionId });
+        setTddsResult(res);
+        setTddsTranscript(transcript);
+      } catch (e) {
+        alert(e.message);
+      }
+    };
+
+    try {
+      recog.start();
+    } catch {
+      setTddsRecording(false);
+    }
+  };
 
   const getConnectionIcon = () => {
     switch (connectionQuality) {
@@ -349,12 +475,46 @@ const Session = () => {
     }
   };
 
+  if (!sessionData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center px-4">
+        <div className="max-w-lg w-full bg-slate-900/60 border border-purple-500/20 rounded-2xl p-6">
+          <h2 className="text-xl font-bold mb-2">Loading session…</h2>
+          {sessionLoading && <p className="text-gray-400">Fetching session details.</p>}
+          {!sessionLoading && !sessionLoadError && (
+            <p className="text-gray-400">Waiting for session data.</p>
+          )}
+          {sessionLoadError && (
+            <div className="mt-3 text-sm text-red-400">
+              {sessionLoadError}
+            </div>
+          )}
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-slate-800 border border-purple-500/20 px-4 py-2 rounded-lg"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => navigate('/sessions')}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 rounded-lg font-medium"
+            >
+              Back to Sessions
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (sessionStatus === 'error') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Session Error</h2>
-          <p className="text-gray-400 mb-6">Failed to connect to the session</p>
+          <p className="text-gray-400 mb-2">Failed to connect to the session</p>
+          {sessionLoadError && <p className="text-red-400 mb-6">{sessionLoadError}</p>}
           <button 
             onClick={() => navigate('/start-learning')}
             className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-full"
@@ -380,7 +540,7 @@ const Session = () => {
             </button>
             <div>
               <h1 className="text-xl font-bold">
-                Learning Session - {sessionData?.skill || 'Peer Learning'}
+                Learning Session - {getSkillLabel()}
               </h1>
               <div className="flex items-center space-x-4 text-sm text-gray-400">
                 <span>with {sessionData?.instructor?.name || sessionData?.learner?.name}</span>
@@ -410,9 +570,35 @@ const Session = () => {
                 Cost: {sessionData.tokenRate} tokens/hr
               </div>
             )}
+
+            <button
+              onClick={runTddsCheck}
+              className="bg-slate-800/70 border border-purple-500/30 px-4 py-2 rounded-full text-sm hover:bg-slate-800"
+            >
+              TDDS Check
+            </button>
           </div>
         </div>
       </header>
+
+      {tddsResult && (
+        <div className="max-w-7xl mx-auto px-4 pt-4">
+          <div className="p-3 bg-slate-800/60 border border-purple-500/20 rounded text-sm text-gray-200 flex flex-wrap gap-6">
+            <div>
+              <span className="text-gray-400">Relevance:</span>{' '}
+              {Math.round((tddsResult.relevanceScore || 0) * 100)}%
+            </div>
+            <div>
+              <span className="text-gray-400">Distraction delta:</span>{' '}
+              {Math.round((tddsResult.distractionDelta || 0) * 100)}%
+            </div>
+            <div>
+              <span className="text-gray-400">Your distractionScore:</span>{' '}
+              {tddsResult.userDistractionScore}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto p-4 grid lg:grid-cols-3 gap-6">
         {/* Video Section */}
@@ -581,7 +767,7 @@ const Session = () => {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Skill:</span>
-                  <span className="text-white">{sessionData.skill}</span>
+                  <span className="text-white">{getSkillLabel()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Duration:</span>

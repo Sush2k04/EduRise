@@ -25,7 +25,7 @@ const Profile = () => {
 					bio: p.bio || '',
 					level: p.level || 'Intermediate'
 				});
-			} catch (e) {
+			} catch {
 				// profile might not exist yet
 			} finally {
 				setLoading(false);

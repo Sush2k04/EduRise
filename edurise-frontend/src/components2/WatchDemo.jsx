@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Play, 
   Pause, 
@@ -19,6 +19,7 @@ import ChatSection from './ChatSection';
 import NotesSection from './NotesSection';
 import FeedbackSection from './FeedbackSection';
 import MeetingControls from './MeetingControls';
+import { tddsAPI } from '../services/api';
 
 const WatchDemo = () => {
   const [activeTab, setActiveTab] = useState('chat'); // chat, notes, feedback
@@ -28,6 +29,9 @@ const WatchDemo = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [demoSentence, setDemoSentence] = useState('React uses components and hooks for state management.');
+  const [tddsDemoResult, setTddsDemoResult] = useState(null);
+  const [tddsLoading, setTddsLoading] = useState(false);
 
   // Demo video data
   const demoData = {
@@ -43,6 +47,23 @@ const WatchDemo = () => {
   const handleGoBack = () => {
     window.history.back();
   };
+
+  const runDemoTdds = async () => {
+    setTddsLoading(true);
+    setTddsDemoResult(null);
+    try {
+      const res = await tddsAPI.demo({ topic: demoData.skill, transcript: demoSentence });
+      setTddsDemoResult(res);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setTddsLoading(false);
+    }
+  };
+
+  const demoDistractionPct = tddsDemoResult
+    ? Math.round((tddsDemoResult.distractionDelta || 0) * 100)
+    : 5;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
@@ -98,6 +119,37 @@ const WatchDemo = () => {
             setIsFullscreen={setIsFullscreen}
           />
           {/* <MeetingControls /> */}
+
+          {/* TDDS Demo */}
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-6">
+            <h3 className="text-lg font-semibold mb-2">TDDS Demo (audio → text placeholder)</h3>
+            <p className="text-sm text-gray-400 mb-3">
+              For the final system, we record per-user meeting audio, transcribe it, and compute relevance vs the session topic.
+            </p>
+            <textarea
+              value={demoSentence}
+              onChange={(e) => setDemoSentence(e.target.value)}
+              rows={2}
+              className="w-full bg-slate-900 border border-purple-500/20 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 transition-colors resize-none text-sm"
+            />
+            <div className="mt-3 flex items-center gap-3">
+              <button
+                onClick={runDemoTdds}
+                disabled={tddsLoading}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+              >
+                {tddsLoading ? 'Analyzing...' : 'Analyze sentence'}
+              </button>
+              {tddsDemoResult && (
+                <div className="text-sm text-gray-200">
+                  <span className="text-gray-400 mr-2">Relevance:</span>
+                  {Math.round((tddsDemoResult.relevanceScore || 0) * 100)}%{' '}
+                  <span className="text-gray-400 ml-4 mr-2">Distraction:</span>
+                  {Math.round((tddsDemoResult.distractionDelta || 0) * 100)}%
+                </div>
+              )}
+            </div>
+          </div>
 
 
           {/* Meeting Controls (for live sessions) */}
@@ -184,7 +236,7 @@ const WatchDemo = () => {
                 <div className="text-sm text-gray-400">Live Viewers</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-pink-400">5%</div>
+                <div className="text-2xl font-bold text-pink-400">{demoDistractionPct}%</div>
                 <div className="text-sm text-gray-400">Distraction level</div>
               </div>
               <div className="text-center">

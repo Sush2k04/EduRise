@@ -82,6 +82,17 @@ const SessionSchema = new mongoose.Schema({
     enum: ['pending', 'active', 'completed', 'cancelled'],
     default: 'pending'
   },
+  scheduledAt: {
+    type: Date
+  },
+  topic: {
+    type: String,
+    default: 'General'
+  },
+  // tokens per minute (e.g. 1/30 means 1 token per 30 minutes)
+  tokenRate: {
+    type: Number
+  },
   duration: {
     scheduled: {
       type: Number, // in minutes

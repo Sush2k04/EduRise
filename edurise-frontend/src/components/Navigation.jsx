@@ -31,10 +31,12 @@ const Navigation = () => {
           
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              <a href="#features" className="hover:text-purple-400 transition-colors">Features</a>
+              {/* <a href="#features" className="hover:text-purple-400 transition-colors">Features</a>
               <a href="#how-it-works" className="hover:text-purple-400 transition-colors">How it Works</a>
               <a href="#pricing" className="hover:text-purple-400 transition-colors">Pricing</a>
-              <a href="#testimonials" className="hover:text-purple-400 transition-colors">Reviews</a>
+              <a href="#testimonials" className="hover:text-purple-400 transition-colors">Reviews</a> */}
+              <a href="dashboard" className="hover:text-purple-400 transition-colors">Dashboard</a> 
+
               {user && (
                 <>
                   <Link to="/profile" className="hover:text-purple-400 transition-colors">Profile</Link>

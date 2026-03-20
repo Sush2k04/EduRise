@@ -50,7 +50,7 @@ const Signup = () => {
         formData.password
       );
       setAuthData(response.token, response.user);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message);
     } finally {

@@ -3,7 +3,6 @@ import React from "react";
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { useRef } from 'react'
-import { useLocation } from "react-router-dom";
 function Stairs() {
 
   const stairparentref = useRef(null);

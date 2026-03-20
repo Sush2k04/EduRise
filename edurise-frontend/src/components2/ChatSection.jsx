@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Send, Smile, Paperclip, MoreVertical, Heart, ThumbsUp } from 'lucide-react';
 
 const ChatSection = () => {
@@ -44,13 +44,6 @@ const ChatSection = () => {
   const inputRef = useRef(null);
 
   const emojis = ['😊', '👍', '❤️', '🤔', '😮', '👏', '🔥', '💯', '🙌', '🤝'];
-
-  useEffect(() => {
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const handleSendMessage = (e) => {
     e.preventDefault();

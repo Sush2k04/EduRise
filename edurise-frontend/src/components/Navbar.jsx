@@ -1,19 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Menu, X } from 'lucide-react';
-import { getCurrentUser, removeAuthData } from '../services/api';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
-  const user = getCurrentUser();
-
-  const handleLogout = () => {
-    removeAuthData();
-    navigate('/');
-    setIsMenuOpen(false);
-  };
-
   return (
     <nav className="fixed top-0 w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-purple-500/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

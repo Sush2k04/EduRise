@@ -1,4 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+function normalizeApiBaseUrl(raw) {
+  if (!raw) return 'http://localhost:5001/api';
+  // Allow either "http://host:port" or "http://host:port/api"
+  return raw.endsWith('/api') ? raw : `${raw.replace(/\/+$/, '')}/api`;
+}
+
+const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {
@@ -47,7 +53,9 @@ export const authAPI = {
       body: JSON.stringify(profileData)
     }),
 
-  getMatches: () => apiCall('/match')
+  getMatches: () => apiCall('/match'),
+
+  getAllProfiles: () => apiCall('/profile/all')
 };
 
 // Session API calls
@@ -58,7 +66,15 @@ export const sessionAPI = {
       body: JSON.stringify({ skill, sessionType, scheduledDuration })
     }),
 
+  book: ({ instructorId, skill, sessionType, scheduledDuration, scheduledAt, topic, tokenRate }) =>
+    apiCall('/session/book', {
+      method: 'POST',
+      body: JSON.stringify({ instructorId, skill, sessionType, scheduledDuration, scheduledAt, topic, tokenRate })
+    }),
+
   getActive: () => apiCall('/session/active'),
+
+  getById: (id) => apiCall(`/session/${id}`),
 
   join: (id) => apiCall(`/session/${id}/join`, { method: 'PUT' }),
 
@@ -69,6 +85,49 @@ export const sessionAPI = {
     }),
 
   getHistory: () => apiCall('/session/history')
+};
+
+// Connection API calls
+export const connectionAPI = {
+  request: (userId) =>
+    apiCall(`/connection/request/${userId}`, { method: 'POST' }),
+
+  accept: (requestId) =>
+    apiCall(`/connection/accept/${requestId}`, { method: 'PUT' }),
+
+  reject: (requestId) =>
+    apiCall(`/connection/reject/${requestId}`, { method: 'PUT' }),
+
+  getMine: () => apiCall('/connection/me')
+};
+
+// TDDS API calls (mock-friendly)
+export const tddsAPI = {
+  evaluate: ({ topic, transcript, sessionId }) =>
+    apiCall('/tdds/evaluate', {
+      method: 'POST',
+      body: JSON.stringify({ topic, transcript, sessionId })
+    }),
+  me: () => apiCall('/tdds/me'),
+  history: (limit = 20) => apiCall(`/tdds/history?limit=${encodeURIComponent(limit)}`),
+  demo: ({ topic, transcript }) =>
+    fetch(`${API_BASE_URL}/tdds/demo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, transcript })
+    }).then(async (r) => {
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+        throw new Error(e.msg || 'Something went wrong');
+      }
+      return r.json();
+    })
+};
+
+export const notificationAPI = {
+  listMine: (limit = 20) => apiCall(`/notification/me?limit=${encodeURIComponent(limit)}`),
+  markRead: (id) => apiCall(`/notification/${id}/read`, { method: 'PUT' }),
+  markAllRead: () => apiCall('/notification/read-all', { method: 'PUT' })
 };
 
 // Check if user is authenticated

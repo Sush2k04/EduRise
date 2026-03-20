@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Navigation from '../components/Navigation';
-import { authAPI } from '../services/api';
+import { authAPI, connectionAPI } from '../services/api';
 
 const Matches = () => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [matches, setMatches] = useState([]);
+	const [requesting, setRequesting] = useState({});
 
 	useEffect(() => {
 		(async () => {
@@ -19,6 +20,18 @@ const Matches = () => {
 			}
 		})();
 	}, []);
+
+	const sendRequest = async (userId) => {
+		setRequesting((p) => ({ ...p, [userId]: true }));
+		setError('');
+		try {
+			await connectionAPI.request(userId);
+		} catch (e) {
+			setError(e.message);
+		} finally {
+			setRequesting((p) => ({ ...p, [userId]: false }));
+		}
+	};
 
 	return (
 		<div className="min-h-screen pt-16">
@@ -43,6 +56,15 @@ const Matches = () => {
 									<div className="text-sm text-gray-300">
 										<span className="mr-2">Offers: {m.skillsOffer.join(', ')}</span>
 										<span>Wants: {m.skillsLearn.join(', ')}</span>
+									</div>
+									<div className="ml-4">
+										<button
+											onClick={() => sendRequest(m.userId)}
+											disabled={!!requesting[m.userId]}
+											className="px-3 py-2 rounded bg-gradient-to-r from-purple-500 to-pink-500 disabled:opacity-50"
+										>
+											{requesting[m.userId] ? 'Sending...' : 'Connect'}
+										</button>
 									</div>
 								</div>
 							</div>

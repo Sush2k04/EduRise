@@ -18,6 +18,21 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6
   },
+  skillsToTeach: [{
+    type: String,
+    trim: true,
+    default: []
+  }],
+  skillsToLearn: [{
+    type: String,
+    trim: true,
+    default: []
+  }],
+  availability: {
+    type: String,
+    enum: ['Morning', 'Afternoon', 'Evenings', 'Weekends', 'Flexible'],
+    default: 'Evenings'
+  },
   tokens: { 
     type: Number, 
     default: 5 
@@ -27,6 +42,26 @@ const userSchema = new mongoose.Schema({
     default: 5,
     min: 1,
     max: 5
+  },
+  ratingCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  ratingSum: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  sessionHistory: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Session'
+  }],
+  distractionScore: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 1
   },
   avatar: {
     type: String,

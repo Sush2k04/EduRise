@@ -18,7 +18,7 @@ const FeedbackSection = ({ socket, sessionId }) => {
   const [feedback, setFeedback] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [feedbackType, setFeedbackType] = useState('session'); // session, instructor, overall
+  const [feedbackType] = useState('session'); // session, instructor, overall
 
   const feedbackTags = {
     session: [
