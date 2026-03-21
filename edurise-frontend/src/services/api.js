@@ -1,10 +1,11 @@
 function normalizeApiBaseUrl(raw) {
-  if (!raw) return 'http://localhost:5001/api';
+  if (!raw) return 'http://localhost:5000/api';
   // Allow either "http://host:port" or "http://host:port/api"
   return raw.endsWith('/api') ? raw : `${raw.replace(/\/+$/, '')}/api`;
 }
 
 const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
+console.log('[API] Using API_BASE_URL:', API_BASE_URL);
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {
@@ -18,17 +19,31 @@ export const getAuthHeaders = () => {
 // Generic API call function
 export const apiCall = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  const response = await fetch(url, {
-    headers: getAuthHeaders(),
-    ...options
-  });
+  console.log('[API] Request:', url);
+  try {
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+      ...options
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.msg || 'Something went wrong');
+    if (!response.ok) {
+      let error = { msg: `HTTP ${response.status}` };
+      try {
+        error = await response.json();
+      } catch (e) {
+        // Could not parse JSON error response
+      }
+      console.error('[API] Error response:', error);
+      throw new Error(error.msg || 'Something went wrong');
+    }
+
+    const data = await response.json();
+    console.log('[API] Success response:', data);
+    return data;
+  } catch (err) {
+    console.error('[API] Request failed:', err);
+    throw err;
   }
-
-  return response.json();
 };
 
 // Auth API calls
