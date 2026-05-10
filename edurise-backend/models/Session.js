@@ -106,6 +106,23 @@ const SessionSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  barterSystem: {
+    instructorTeachingWanted: {
+      type: Boolean,
+      default: false
+    },
+    learnerCanTeachBack: {
+      type: Boolean,
+      default: false
+    },
+    isReciprocal: {
+      type: Boolean,
+      default: false
+    },
+    learnerTaughtBackSkill: {
+      name: String
+    }
+  },
   chatMessages: [MessageSchema],
   notes: [NoteSchema],
   feedback: {

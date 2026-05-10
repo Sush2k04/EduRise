@@ -141,13 +141,15 @@ export async function joinSession(req, res) {
 export async function endSession(req, res) {
   try {
     const { feedback, notes, tokensExchanged } = req.body;
-    const session = await Session.findById(req.params.id);
+    const session = await Session.findById(req.params.id)
+      .populate('instructor', 'skillsToTeach skillsToLearn tokens')
+      .populate('learner', 'skillsToTeach skillsToLearn tokens');
 
     if (!session) {
       return res.status(404).json({ msg: 'Session not found' });
     }
 
-    if (session.instructor.toString() !== req.user.id && session.learner?.toString() !== req.user.id) {
+    if (session.instructor._id.toString() !== req.user.id && session.learner?._id.toString() !== req.user.id) {
       return res.status(403).json({ msg: 'Access denied' });
     }
 
@@ -166,7 +168,7 @@ export async function endSession(req, res) {
     }
 
     if (feedback) {
-      if (req.user.id === session.instructor.toString()) {
+      if (req.user.id === session.instructor._id.toString()) {
         session.feedback.instructorFeedback = {
           ...feedback,
           submittedAt: new Date()
@@ -179,14 +181,100 @@ export async function endSession(req, res) {
       }
     }
 
+    // ========== BARTER TOKEN SYSTEM LOGIC ==========
+    try {
+      const instructor = session.instructor;
+      const learner = session.learner;
+
+      if (instructor && learner) {
+        // Get skill arrays (handle both array and undefined cases)
+        const instructorSkillsToTeach = instructor.skillsToTeach || [];
+        const instructorSkillsToLearn = instructor.skillsToLearn || [];
+        const learnerSkillsToLearn = learner.skillsToLearn || [];
+        const learnerSkillsToTeach = learner.skillsToTeach || [];
+
+        // Skill being taught in this session
+        const taughtSkill = session.skill?.name?.toLowerCase() || '';
+
+        // Case 1: Check if learner WANTS to learn what instructor is teaching
+        const doesLearnerWantToLearn = taughtSkill &&
+          learnerSkillsToLearn.some(s => s.toLowerCase() === taughtSkill);
+
+        console.log('[Barter] Skill taught:', taughtSkill);
+        console.log('[Barter] Learner wants to learn:', doesLearnerWantToLearn);
+        console.log('[Barter] Learner skills to teach:', learnerSkillsToTeach);
+        console.log('[Barter] Instructor skills to learn:', instructorSkillsToLearn);
+
+        // Case 2: Check if learner can teach back something instructor WANTS to learn
+        let canLearnerTeachBack = false;
+        for (let skill of learnerSkillsToTeach) {
+          if (instructorSkillsToLearn.some(s => s.toLowerCase() === skill.toLowerCase())) {
+            canLearnerTeachBack = true;
+            session.barterSystem.learnerTaughtBackSkill = {
+              name: skill
+            };
+            break;
+          }
+        }
+
+        console.log('[Barter] Learner can teach back:', canLearnerTeachBack);
+
+        // Apply token logic
+        let instructorTokenChange = 0;
+        let learnerTokenChange = 0;
+
+        if (doesLearnerWantToLearn) {
+          // ✅ CASE 1: Barter System (Both teach each other)
+          if (canLearnerTeachBack) {
+            console.log('[Barter] CASE 1: Reciprocal teaching (Barter) - NET = 0 tokens');
+            // A taught B + B taught A back = NET ZERO
+            session.barterSystem.isReciprocal = true;
+            // No token change - they balance out
+            instructorTokenChange = 0;
+            learnerTokenChange = 0;
+          }
+          // ✅ CASE 2: One-way teaching (Learner wants to learn but can't teach back)
+          else {
+            console.log('[Barter] CASE 2: One-way teaching - B gets -1, A gets +1');
+            // A teaches B, but B can't teach A
+            instructorTokenChange = +1;
+            learnerTokenChange = -1;
+          }
+        } else {
+          // ❌ Learner doesn't want to learn this skill => No token exchange
+          console.log('[Barter] Learner not interested in this skill - NO TOKEN EXCHANGE');
+          instructorTokenChange = 0;
+          learnerTokenChange = 0;
+        }
+
+        session.barterSystem.instructorTeachingWanted = doesLearnerWantToLearn;
+        session.barterSystem.learnerCanTeachBack = canLearnerTeachBack;
+
+        // Update tokens in database
+        instructor.tokens = (instructor.tokens || 0) + instructorTokenChange;
+        learner.tokens = (learner.tokens || 0) + learnerTokenChange;
+        session.tokensExchanged = instructorTokenChange; // Store net change for instructor
+
+        console.log(`[Barter] Token update - Instructor: ${instructorTokenChange > 0 ? '+' : ''}${instructorTokenChange}, Learner: ${learnerTokenChange > 0 ? '+' : ''}${learnerTokenChange}`);
+
+        await Promise.all([
+          instructor.save(),
+          learner.save(),
+          session.save()
+        ]);
+      }
+    } catch (e) {
+      console.warn('[Barter] Token exchange failed:', e?.message || e);
+    }
+
     await session.save();
 
     // Rating system (v1): apply feedback rating to the OTHER user
     try {
       const r = typeof feedback?.rating === 'number' ? feedback.rating : null;
       if (r && r >= 1 && r <= 5) {
-        const isInstructorSubmitting = req.user.id === session.instructor.toString();
-        const targetUserId = isInstructorSubmitting ? session.learner : session.instructor;
+        const isInstructorSubmitting = req.user.id === session.instructor._id.toString();
+        const targetUserId = isInstructorSubmitting ? session.learner._id : session.instructor._id;
         if (targetUserId) {
           const target = await User.findById(targetUserId);
           if (target) {
@@ -201,34 +289,10 @@ export async function endSession(req, res) {
       console.warn('Rating update failed:', e?.message || e);
     }
 
-    // Token system (v1): learner pays instructor
-    try {
-      if (session.learner) {
-        const minutes = session.duration.actual ?? session.duration.scheduled ?? 60;
-        const rate = session.tokenRate ?? 1 / 30;
-        const computed = Math.max(1, Math.round(minutes * rate));
-        const amount = typeof tokensExchanged === 'number' ? tokensExchanged : computed;
-
-        const [instructor, learner] = await Promise.all([
-          User.findById(session.instructor),
-          User.findById(session.learner)
-        ]);
-
-        if (instructor && learner) {
-          const spend = Math.min(learner.tokens || 0, amount);
-          learner.tokens = (learner.tokens || 0) - spend;
-          instructor.tokens = (instructor.tokens || 0) + spend;
-          session.tokensExchanged = spend;
-          await Promise.all([learner.save(), instructor.save(), session.save()]);
-        }
-      }
-    } catch (e) {
-      console.warn('Token exchange failed:', e?.message || e);
-    }
-
     res.json({
       success: true,
-      message: 'Session ended successfully'
+      message: 'Session ended successfully',
+      barterDetails: session.barterSystem
     });
   } catch (error) {
     console.error(error.message);
