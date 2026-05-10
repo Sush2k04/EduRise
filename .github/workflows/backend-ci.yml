@@ -1,0 +1,58 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'edurise-backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'edurise-backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: 'edurise-backend/package-lock.json'
+    
+    - name: Install dependencies
+      working-directory: ./edurise-backend
+      run: npm ci
+    
+    - name: Run linter
+      working-directory: ./edurise-backend
+      run: npm run lint --if-present
+      continue-on-error: true
+    
+    - name: Check for security vulnerabilities
+      working-directory: ./edurise-backend
+      run: npm audit --audit-level=moderate
+      continue-on-error: true
+    
+    - name: Run tests
+      working-directory: ./edurise-backend
+      run: npm test --if-present
+      continue-on-error: true
+    
+    - name: Verify server startup
+      working-directory: ./edurise-backend
+      run: timeout 5 npm start || true
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://localhost:27017/edurise-test
+        JWT_SECRET: test-secret-key

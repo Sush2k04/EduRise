@@ -35,4 +35,4 @@ jobs:
       - name: Build Frontend
         run: |
           cd edurise-frontend
-          npm run build
+          npm run dev

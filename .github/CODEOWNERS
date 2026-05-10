@@ -1,0 +1,14 @@
+# Define code owners for review requirements
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Backend code
+edurise-backend/ @backend-team
+
+# Frontend code  
+edurise-frontend/ @frontend-team
+
+# Workflows and CI/CD
+.github/ @maintainers
+
+# Root configs
+.env* @maintainers

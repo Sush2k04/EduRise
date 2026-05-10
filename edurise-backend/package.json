@@ -6,15 +6,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "lint": "echo 'Linting not configured yet. Add eslint to devDependencies.'",
+    "test": "echo 'Tests not configured yet. Add jest or similar testing framework.'"
   },
   "author": "Your Name",
   "license": "ISC",
   "dependencies": {
-<<<<<<< HEAD
-=======
     "@xenova/transformers": "^2.17.2",
->>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

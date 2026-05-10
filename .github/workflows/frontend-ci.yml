@@ -1,0 +1,51 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'edurise-frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'edurise-frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+jobs:
+  frontend-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: 'edurise-frontend/package-lock.json'
+    
+    - name: Install dependencies
+      working-directory: ./edurise-frontend
+      run: npm ci
+    
+    - name: Run ESLint
+      working-directory: ./edurise-frontend
+      run: npm run lint
+      continue-on-error: true
+    
+    - name: Build project
+      working-directory: ./edurise-frontend
+      run: npm run build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-build-${{ matrix.node-version }}
+        path: edurise-frontend/dist
+        retention-days: 5

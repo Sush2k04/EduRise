@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --fix",
+    "preview": "vite preview",
+    "test": "echo 'Tests not configured yet. Add vitest or similar testing framework.'"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
