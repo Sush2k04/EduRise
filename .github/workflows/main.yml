@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - backend
 
   pull_request:
     branches:
@@ -25,15 +24,15 @@ jobs:
 
       - name: Install Backend Dependencies
         run: |
-          cd backend
+          cd edurise-backend
           npm install
 
       - name: Install Frontend Dependencies
         run: |
-          cd frontend
+          cd edurise-frontend
           npm install
 
       - name: Build Frontend
         run: |
-          cd frontend
+          cd edurise-frontend
           npm run build
