@@ -1,8 +1,15 @@
 import React from 'react';
 import { BookOpen, Users, Coins, ArrowRight, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
+<<<<<<< HEAD
 
 const Hero = () => {
+=======
+import { getCurrentUser } from '../services/api';
+
+const Hero = () => {
+  const user = getCurrentUser();
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   return (
     <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -23,7 +30,13 @@ const Hero = () => {
             
             <div className="flex flex-col sm:flex-row gap-4">
               <button className="bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4 rounded-full font-semibold text-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
+<<<<<<< HEAD
                <Link to="/start-learning" className='flex items-center justify-center'> Start Learning <ArrowRight className="w-5 h-5 ml-2" /></Link>
+=======
+                <Link to={user ? '/dashboard' : '/signup'} className="flex items-center justify-center">
+                  {user ? 'Go to dashboard' : 'Get started'} <ArrowRight className="w-5 h-5 ml-2" />
+                </Link>
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
               </button>
               <button className="">
                 <Link to="/watchdemo" className='border border-purple-500 px-8 py-4 rounded-full font-semibold text-lg hover:bg-purple-500/10 transition-all duration-300 flex items-center justify-center' > <Play className="w-5 h-5 mr-2" /> Watch Demo </Link>

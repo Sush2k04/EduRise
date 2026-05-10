@@ -24,13 +24,24 @@ import {
 import { getCurrentUser as getStoredUser } from '../services/api';
 import { tddsAPI } from '../services/api';
 import { getSocket } from '../services/socket';
+<<<<<<< HEAD
 import { sessionAPI } from '../services/api';
+=======
+import { formatScoreAsPercentage } from '../utils/timeFormat';
+import { sessionAPI } from '../services/api';
+import { tokenAPI } from '../services/api';
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
 // Import our existing components
 import ChatSection from '../components2/ChatSection';
 import NotesSection from '../components2/NotesSection';
 import FeedbackSection from '../components2/FeedbackSection';
 
+<<<<<<< HEAD
+=======
+const isLiveSessionUI = (s) => s === 'active' || s === 'ongoing';
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 const Session = () => {
   const { sessionId } = useParams();
   const location = useLocation();
@@ -60,8 +71,15 @@ const Session = () => {
   const [connectionQuality, setConnectionQuality] = useState('good');
   const [tddsResult, setTddsResult] = useState(null);
   const [tddsRecording, setTddsRecording] = useState(false);
+<<<<<<< HEAD
   const [tddsTranscript, setTddsTranscript] = useState('');
   const [sessionLoading, setSessionLoading] = useState(false);
+=======
+  const [tddsAnalyzing, setTddsAnalyzing] = useState(false);
+  const [tddsTranscript, setTddsTranscript] = useState('');
+  const [sessionLoading, setSessionLoading] = useState(false);
+  const chatMessagesRef = useRef([]);
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
   // Refs
   const localVideoRef = useRef(null);
@@ -94,8 +112,19 @@ const Session = () => {
         setSessionData({
           ...s,
           skill: s?.skill?.name || s?.topic || 'Peer Learning',
+<<<<<<< HEAD
           tokenRate: s?.tokenRate
         });
+=======
+          tokenRate: s?.tokenRate,
+          status: s?.status
+        });
+        if (s?.status === 'ongoing' || s?.status === 'active') {
+          setSessionStatus('ongoing');
+        } else if (s?.status === 'pending') {
+          setSessionStatus('connecting');
+        }
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
       } catch (e) {
         setSessionLoadError(e.message);
       } finally {
@@ -106,7 +135,11 @@ const Session = () => {
 
   useEffect(() => {
     let interval;
+<<<<<<< HEAD
     if (sessionStatus === 'active') {
+=======
+    if (isLiveSessionUI(sessionStatus)) {
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
       interval = setInterval(() => {
         setSessionTimer(prev => prev + 1);
       }, 1000);
@@ -114,6 +147,24 @@ const Session = () => {
     return () => clearInterval(interval);
   }, [sessionStatus]);
 
+<<<<<<< HEAD
+=======
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await sessionAPI.join(sessionId);
+      } catch (e) {
+        if (!cancelled) console.warn('Session join:', e.message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   const initializeSession = async () => {
     try {
       // Initialize socket connection
@@ -150,7 +201,15 @@ const Session = () => {
     });
 
     socket.on('user-joined-session', () => {
+<<<<<<< HEAD
       setSessionStatus('active');
+=======
+      setSessionStatus('ongoing');
+    });
+
+    socket.on('session-started', () => {
+      setSessionStatus('ongoing');
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     });
 
     socket.on('webrtc-offer', async (data) => {
@@ -288,7 +347,11 @@ const Session = () => {
 
   useEffect(() => {
     // Auto-start call when active and you're the initiator
+<<<<<<< HEAD
     if (sessionStatus !== 'active') return;
+=======
+    if (!isLiveSessionUI(sessionStatus)) return;
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     if (!isInitiator) return;
     if (!pcRef.current) return;
     if (!localStream) return;
@@ -359,12 +422,35 @@ const Session = () => {
     }
   };
 
+<<<<<<< HEAD
   const endSession = () => {
     if (window.confirm('Are you sure you want to end this session?')) {
       socket?.emit('end-session', { sessionId });
       cleanup();
       navigate('/start-learning');
     }
+=======
+  const endSession = async () => {
+    if (!window.confirm('Are you sure you want to end this session?')) return;
+    // Enhanced TDDS (v2): analyze chat transcript at end (non-blocking)
+    try {
+      const transcript = chatMessagesRef.current.join('\n');
+      const topic = getSkillLabel() || 'general';
+      if ((transcript || '').trim().length > 10) {
+        await tddsAPI.analyzeSession({ sessionId, transcript, topic });
+      }
+    } catch (err) {
+      console.error('TDDS analysis failed:', err);
+    }
+    try {
+      await sessionAPI.end(sessionId, {});
+    } catch (e) {
+      console.warn('End session API:', e.message);
+    }
+    socket?.emit('end-session', { sessionId });
+    cleanup();
+    navigate('/dashboard');
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   };
 
   const cleanup = () => {
@@ -397,6 +483,15 @@ const Session = () => {
     return sessionData?.topic || 'Peer Learning';
   };
 
+<<<<<<< HEAD
+=======
+  const isHost = () => {
+    const me = getCurrentUser();
+    // Check against _id because instructor is populated from MongoDB
+    return sessionData?.instructor?._id === String(me?.id);
+  };
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   const runTddsCheck = async () => {
     const topic = getSkillLabel() || 'General';
 
@@ -418,16 +513,25 @@ const Session = () => {
     }
 
     // Toggle: if already recording, ignore (we auto-stop on speech end)
+<<<<<<< HEAD
     if (tddsRecording) return;
+=======
+    if (tddsRecording || tddsAnalyzing) return;
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
     setTddsResult(null);
     setTddsTranscript('');
     setTddsRecording(true);
+<<<<<<< HEAD
+=======
+    setTddsAnalyzing(false);
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
     const recog = new SpeechRecognition();
     recog.lang = 'en-US';
     recog.interimResults = true;
     recog.continuous = false; // stop after you finish speaking
+<<<<<<< HEAD
 
     let finalText = '';
 
@@ -444,18 +548,65 @@ const Session = () => {
     recog.onerror = () => {
       setTddsRecording(false);
       alert('Speech recognition failed. Check mic permissions and try again.');
+=======
+    recog.maxAlternatives = 1;
+
+    let finalText = '';
+    let interimText = '';
+    let lastTranscript = '';
+
+    recog.onstart = () => {
+      // Useful when debugging mic/speech recognition issues
+      console.log('[TDDS] SpeechRecognition started');
+    };
+
+    recog.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const chunk = event.results[i][0]?.transcript || '';
+        if (event.results[i].isFinal) finalText += chunk;
+        else interimText = chunk;
+      }
+      lastTranscript = (finalText + ' ' + interimText).trim();
+      setTddsTranscript(lastTranscript);
+    };
+
+    recog.onerror = (err) => {
+      setTddsRecording(false);
+      setTddsAnalyzing(false);
+      const reason = err?.error ? ` (${err.error})` : '';
+      console.error('[TDDS] SpeechRecognition error:', err);
+      alert(
+        `Speech recognition failed${reason}. ` +
+          'Check microphone permissions, make sure you are speaking, and try again.'
+      );
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     };
 
     recog.onend = async () => {
       setTddsRecording(false);
+<<<<<<< HEAD
       const transcript = (finalText || tddsTranscript).trim();
       if (!transcript) return;
+=======
+      const transcript = (lastTranscript || '').trim();
+      if (!transcript) {
+        alert('No speech detected. Please try again and speak clearly.');
+        return;
+      }
+
+      setTddsAnalyzing(true);
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
       try {
         const res = await tddsAPI.evaluate({ topic, transcript, sessionId });
         setTddsResult(res);
         setTddsTranscript(transcript);
       } catch (e) {
         alert(e.message);
+<<<<<<< HEAD
+=======
+      } finally {
+        setTddsAnalyzing(false);
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
       }
     };
 
@@ -463,6 +614,10 @@ const Session = () => {
       recog.start();
     } catch {
       setTddsRecording(false);
+<<<<<<< HEAD
+=======
+      setTddsAnalyzing(false);
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     }
   };
 
@@ -516,10 +671,17 @@ const Session = () => {
           <p className="text-gray-400 mb-2">Failed to connect to the session</p>
           {sessionLoadError && <p className="text-red-400 mb-6">{sessionLoadError}</p>}
           <button 
+<<<<<<< HEAD
             onClick={() => navigate('/start-learning')}
             className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-full"
           >
             Back to Learning
+=======
+            onClick={() => navigate('/dashboard')}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-full"
+          >
+            Back to dashboard
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
           </button>
         </div>
       </div>
@@ -533,15 +695,32 @@ const Session = () => {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button 
+<<<<<<< HEAD
               onClick={() => navigate('/start-learning')}
+=======
+              onClick={() => navigate('/dashboard')}
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
               className="p-2 hover:bg-purple-500/20 rounded-full transition-colors"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
             <div>
+<<<<<<< HEAD
               <h1 className="text-xl font-bold">
                 Learning Session - {getSkillLabel()}
               </h1>
+=======
+              <div className="flex items-center space-x-3 mb-1">
+                <h1 className="text-xl font-bold">
+                  Learning Session - {getSkillLabel()}
+                </h1>
+                {isHost() && (
+                  <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-xs font-semibold">
+                    HOST
+                  </span>
+                )}
+              </div>
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
               <div className="flex items-center space-x-4 text-sm text-gray-400">
                 <span>with {sessionData?.instructor?.name || sessionData?.learner?.name}</span>
                 <div className="flex items-center space-x-1">
@@ -558,7 +737,11 @@ const Session = () => {
           
           <div className="flex items-center space-x-4">
             <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+<<<<<<< HEAD
               sessionStatus === 'active' ? 'bg-green-500/20 text-green-400' : 
+=======
+              isLiveSessionUI(sessionStatus) ? 'bg-green-500/20 text-green-400' : 
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
               sessionStatus === 'connecting' ? 'bg-yellow-500/20 text-yellow-400' :
               'bg-red-500/20 text-red-400'
             }`}>
@@ -571,12 +754,35 @@ const Session = () => {
               </div>
             )}
 
+<<<<<<< HEAD
             <button
               onClick={runTddsCheck}
               className="bg-slate-800/70 border border-purple-500/30 px-4 py-2 rounded-full text-sm hover:bg-slate-800"
             >
               TDDS Check
             </button>
+=======
+            {isHost() && (
+              <button
+                onClick={runTddsCheck}
+                disabled={tddsRecording || tddsAnalyzing}
+                className={`border border-purple-500/30 px-4 py-2 rounded-full text-sm hover:bg-slate-800 transition ${
+                  tddsRecording || tddsAnalyzing
+                    ? 'bg-slate-800/50 text-gray-400 cursor-not-allowed'
+                    : 'bg-slate-800/70 text-white'
+                }`}
+              >
+                {tddsRecording || tddsAnalyzing ? (
+                  <span className="inline-flex items-center gap-2">
+                    Analyzing...
+                    <span className="animate-spin inline-block w-4 h-4 border-2 border-white/80 border-t-transparent rounded-full" />
+                  </span>
+                ) : (
+                  'TDDS Check'
+                )}
+              </button>
+            )}
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
           </div>
         </div>
       </header>
@@ -594,7 +800,11 @@ const Session = () => {
             </div>
             <div>
               <span className="text-gray-400">Your distractionScore:</span>{' '}
+<<<<<<< HEAD
               {tddsResult.userDistractionScore}
+=======
+              {formatScoreAsPercentage(tddsResult.userDistractionScore)}
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
             </div>
           </div>
         </div>
@@ -694,7 +904,11 @@ const Session = () => {
               </button>
 
               {/* Start Call (if not connected) */}
+<<<<<<< HEAD
               {!isConnected && sessionStatus === 'active' && (
+=======
+              {!isConnected && isLiveSessionUI(sessionStatus) && (
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
                 <button
                   onClick={startCall}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-full font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
@@ -753,6 +967,12 @@ const Session = () => {
     socket={socket} 
     sessionId={sessionId} 
     currentUser={getCurrentUser()} 
+<<<<<<< HEAD
+=======
+    onTranscriptLine={(line) => {
+      chatMessagesRef.current.push(line);
+    }}
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   />
 )}
               {activeTab === 'notes' && <NotesSection socket={socket} sessionId={sessionId} />}
@@ -780,7 +1000,11 @@ const Session = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-400">Status:</span>
                   <span className={`capitalize ${
+<<<<<<< HEAD
                     sessionStatus === 'active' ? 'text-green-400' : 
+=======
+                    isLiveSessionUI(sessionStatus) ? 'text-green-400' : 
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
                     sessionStatus === 'connecting' ? 'text-yellow-400' : 'text-red-400'
                   }`}>
                     {sessionStatus}

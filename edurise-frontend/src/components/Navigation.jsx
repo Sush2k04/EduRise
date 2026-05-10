@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BookOpen, Menu, X } from 'lucide-react';
 import { getCurrentUser, removeAuthData } from '../services/api';
+<<<<<<< HEAD
+=======
+import TokenBadge from './TokenBadge';
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,6 +39,7 @@ const Navigation = () => {
               <a href="#how-it-works" className="hover:text-purple-400 transition-colors">How it Works</a>
               <a href="#pricing" className="hover:text-purple-400 transition-colors">Pricing</a>
               <a href="#testimonials" className="hover:text-purple-400 transition-colors">Reviews</a> */}
+<<<<<<< HEAD
               <a href="dashboard" className="hover:text-purple-400 transition-colors">Dashboard</a> 
 
               {user && (
@@ -42,6 +47,14 @@ const Navigation = () => {
                   <Link to="/profile" className="hover:text-purple-400 transition-colors">Profile</Link>
                   <Link to="/matches" className="hover:text-purple-400 transition-colors">Matches</Link>
                   <Link to="/sessions" className="hover:text-purple-400 transition-colors">Sessions</Link>
+=======
+              {user && (
+                <>
+                  <Link to="/dashboard" className="hover:text-purple-400 transition-colors">Dashboard</Link>
+                  <Link to="/matches" className="hover:text-purple-400 transition-colors">Matches</Link>
+                  <Link to="/sessions" className="hover:text-purple-400 transition-colors">Sessions</Link>
+                  <Link to="/profile" className="hover:text-purple-400 transition-colors">Profile</Link>
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
                 </>
               )}
             </div>
@@ -51,10 +64,14 @@ const Navigation = () => {
             {user ? (
               <>
                 <span className="text-purple-400">Welcome, {user.name}</span>
+<<<<<<< HEAD
                 <span className="text-yellow-400 flex items-center">
                   <span className="w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
                   {user.tokens} tokens
                 </span>
+=======
+                <TokenBadge />
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
                 <button 
                   onClick={handleLogout}
                   className="text-white hover:text-purple-400 transition-colors"
@@ -93,16 +110,26 @@ const Navigation = () => {
             <a href="#testimonials" className="block px-3 py-2 hover:text-purple-400">Reviews</a>
             {user && (
               <>
+<<<<<<< HEAD
                 <Link to="/profile" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Profile</Link>
                 <Link to="/matches" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Matches</Link>
                 <Link to="/sessions" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Sessions</Link>
+=======
+                <Link to="/dashboard" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+                <Link to="/matches" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Matches</Link>
+                <Link to="/sessions" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Sessions</Link>
+                <Link to="/profile" className="block px-3 py-2 hover:text-purple-400" onClick={() => setIsMenuOpen(false)}>Profile</Link>
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
               </>
             )}
             <div className="pt-4 pb-3 border-t border-purple-500/20">
               {user ? (
                 <>
                   <div className="px-3 py-2 text-purple-400">Welcome, {user.name}</div>
+<<<<<<< HEAD
                   <div className="px-3 py-2 text-yellow-400">{user.tokens} tokens</div>
+=======
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
                   <button 
                     onClick={handleLogout}
                     className="block w-full text-left px-3 py-2 hover:text-purple-400"

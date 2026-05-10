@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 
+<<<<<<< HEAD
 const ChatSectionLive = ({ socket, sessionId, currentUser }) => {
+=======
+const ChatSectionLive = ({ socket, sessionId, currentUser, onTranscriptLine }) => {
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   const [messages, setMessages] = useState([]);
   const [newMsg, setNewMsg] = useState("");
   const messagesEndRef = useRef(null);
@@ -17,11 +21,37 @@ const ChatSectionLive = ({ socket, sessionId, currentUser }) => {
     socket.on("session-data", (data) => {
       if (data.chatMessages) {
         setMessages(data.chatMessages);
+<<<<<<< HEAD
+=======
+        try {
+          if (typeof onTranscriptLine === 'function') {
+            data.chatMessages.forEach((m) => {
+              const name = m?.sender?.name || 'Unknown';
+              const text = m?.message || '';
+              if (text) onTranscriptLine(`${name}: ${text}`);
+            });
+          }
+        } catch {
+          // ignore
+        }
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
       }
     });
 
     socket.on("new-chat-message", (msg) => {
       setMessages((prev) => [...prev, msg]);
+<<<<<<< HEAD
+=======
+      try {
+        if (typeof onTranscriptLine === 'function') {
+          const name = msg?.sender?.name || 'Unknown';
+          const text = msg?.message || '';
+          if (text) onTranscriptLine(`${name}: ${text}`);
+        }
+      } catch {
+        // ignore
+      }
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     });
 
     return () => {

@@ -11,7 +11,11 @@ import {
   Coins,
   UserPlus
 } from 'lucide-react';
+<<<<<<< HEAD
 import { getCurrentUser as getStoredUser } from '../services/api';
+=======
+import { getCurrentUser as getStoredUser, tokenAPI } from '../services/api';
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 import { authAPI, sessionAPI } from '../services/api';
 import { getSocket } from '../services/socket';
 
@@ -19,6 +23,10 @@ const StartLearning = () => {
   const navigate = useNavigate();
   const [activeUsers, setActiveUsers] = useState([]);
   const [teachers, setTeachers] = useState([]);
+<<<<<<< HEAD
+=======
+  const [liveBalance, setLiveBalance] = useState(null);
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   // const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('all');
@@ -35,7 +43,11 @@ const StartLearning = () => {
       name: u?.name || 'Anonymous',
       avatar: u?.avatar || '🧑‍💻',
       skills: u?.skillsToTeach || [],
+<<<<<<< HEAD
       tokens: u?.tokens ?? 0
+=======
+      tokens: liveBalance ?? u?.tokens ?? 0
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     };
   })();
 
@@ -106,6 +118,21 @@ const StartLearning = () => {
   ];
 
   useEffect(() => {
+<<<<<<< HEAD
+=======
+    // Fetch live token balance from API
+    (async () => {
+      try {
+        const res = await tokenAPI.getBalance();
+        setLiveBalance(res.balance);
+      } catch (err) {
+        console.error('Error fetching balance:', err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     // Initialize socket connection
     const newSocket = getSocket();
 
@@ -234,7 +261,11 @@ const StartLearning = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 bg-slate-800 px-4 py-2 rounded-full">
               <Coins className="w-4 h-4 text-yellow-400" />
+<<<<<<< HEAD
               <span className="text-yellow-400 font-medium">{currentUser.tokens}</span>
+=======
+              <span className="text-yellow-400 font-medium">{currentUser.tokens ?? 0}</span>
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
             </div>
             <div className="text-2xl">{currentUser.avatar}</div>
           </div>

@@ -11,6 +11,10 @@
   "author": "Your Name",
   "license": "ISC",
   "dependencies": {
+<<<<<<< HEAD
+=======
+    "@xenova/transformers": "^2.17.2",
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

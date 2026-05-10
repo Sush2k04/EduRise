@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Sessions = () => {
 	const navigate = useNavigate();
+<<<<<<< HEAD
 	const [creating, setCreating] = useState(false);
 	const [error, setError] = useState('');
 	const [active, setActive] = useState([]);
@@ -17,6 +18,11 @@ const Sessions = () => {
 		sessionType: 'video',
 		scheduledDuration: 60
 	});
+=======
+	const [error, setError] = useState('');
+	const [active, setActive] = useState([]);
+	const [history, setHistory] = useState([]);
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
 	const load = async () => {
 		try {
@@ -36,6 +42,7 @@ const Sessions = () => {
 		load();
 	}, []);
 
+<<<<<<< HEAD
 	const createSession = async (e) => {
 		e.preventDefault();
 		setCreating(true);
@@ -55,6 +62,8 @@ const Sessions = () => {
 		}
 	};
 
+=======
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 	const join = async (id) => {
 		try {
 			setError('');
@@ -76,6 +85,7 @@ const Sessions = () => {
 			<Navigation />
 			<div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
 				<h1 className="text-2xl font-bold">Sessions</h1>
+<<<<<<< HEAD
 				{error && <div className="text-red-400">{error}</div>}
 
 				{/* Create session */}
@@ -104,6 +114,16 @@ const Sessions = () => {
 				{/* Active sessions */}
 				<div className="p-4 bg-slate-800 border border-purple-500/20 rounded">
 					<h2 className="font-semibold mb-4">Active/Pending</h2>
+=======
+				<p className="text-gray-400 text-sm mt-2">
+					Start a new session from the <button type="button" onClick={() => navigate('/dashboard')} className="text-purple-300 underline">dashboard</button> with a connected peer.
+				</p>
+				{error && <div className="text-red-400">{error}</div>}
+
+				{/* Active sessions */}
+				<div className="p-4 bg-slate-800 border border-purple-500/20 rounded">
+					<h2 className="font-semibold mb-4">Pending / live</h2>
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 					{active.length === 0 ? (
 						<div className="text-gray-400">No active sessions</div>
 					) : (
@@ -111,7 +131,11 @@ const Sessions = () => {
 							{active.map(s => (
 								<div key={s._id} className="flex items-center justify-between bg-slate-900 rounded p-3">
 									<div>
+<<<<<<< HEAD
 										<div className="font-semibold">{s.skill?.name} • {s.sessionType} • {s.status}</div>
+=======
+										<div className="font-semibold">{s.skill?.name} • {s.sessionType} • {s.status === 'ongoing' ? 'live' : s.status}</div>
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 										<div className="text-sm text-gray-400">Scheduled {s.duration?.scheduled} min</div>
 									</div>
 									<div className="space-x-2">

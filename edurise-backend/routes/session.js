@@ -8,7 +8,12 @@ import {
   getActiveSessions,
   getHistory,
   getSessionById,
+<<<<<<< HEAD
   joinSession
+=======
+  joinSession,
+  startSessionWithPeer
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 } from '../controllers/sessionController.js';
 
 const router = express.Router();
@@ -18,6 +23,10 @@ const router = express.Router();
 // @access  Private
 router.post('/create', auth, createSession);
 router.post('/book', auth, bookSession);
+<<<<<<< HEAD
+=======
+router.post('/start', auth, startSessionWithPeer);
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
 // @route   GET /api/session/active
 // @desc    Get active sessions for user

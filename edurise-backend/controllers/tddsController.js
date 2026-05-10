@@ -1,6 +1,76 @@
 import User from '../models/User.js';
 import { clamp01, relevanceScore } from '../utils/nlp.js';
 import TddsEvaluation from '../models/TddsEvaluation.js';
+<<<<<<< HEAD
+=======
+import Profile from '../models/Profile.js';
+import Session from '../models/Session.js';
+import tddsService from '../services/tddsService.js';
+
+async function updateUserAverages(userId) {
+  const items = await TddsEvaluation.find({ user: userId })
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .select('relevanceScore distractionDelta distractionScore')
+    .lean();
+
+  if (items.length === 0) return;
+
+  const avgRel = items.reduce((acc, r) => acc + (r.relevanceScore || 0), 0) / items.length;
+  const avgDis = items.reduce((acc, r) => acc + (r.distractionScore ?? r.distractionDelta ?? 0), 0) / items.length;
+
+  await Profile.findOneAndUpdate(
+    { user: userId },
+    { avgRelevanceScore: clamp01(avgRel), avgDistractionScore: clamp01(avgDis) },
+    { new: false }
+  );
+}
+
+// TDDS v2: AI-powered analyze endpoint (non-breaking addition)
+export async function analyzeSession(req, res) {
+  try {
+    const { sessionId, transcript, topic } = req.body || {};
+    if (!sessionId || !transcript) {
+      return res.status(400).json({ success: false, message: 'sessionId and transcript required' });
+    }
+
+    const session = await Session.findById(sessionId).select('instructor learner topic skill status').lean();
+    if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
+
+    const resolvedTopic = topic || session.topic || session.skill?.name || 'general';
+    const { relevanceScore, distractionScore } = await tddsService.analyze(transcript, resolvedTopic);
+
+    // Persist per-user evaluation (keeps compatibility with existing TDDS history views)
+    const saved = await TddsEvaluation.findOneAndUpdate(
+      { user: req.user.id, session: sessionId, topic: resolvedTopic },
+      {
+        user: req.user.id,
+        session: sessionId,
+        topic: resolvedTopic,
+        transcript,
+        relevanceScore: clamp01(relevanceScore),
+        distractionDelta: clamp01(1 - relevanceScore),
+        distractionScore: clamp01(distractionScore)
+      },
+      { upsert: true, new: true }
+    ).lean();
+
+    // Update averages for both participants when possible
+    try {
+      await updateUserAverages(req.user.id);
+      if (session.instructor) await updateUserAverages(session.instructor);
+      if (session.learner) await updateUserAverages(session.learner);
+    } catch {
+      // ignore
+    }
+
+    res.json({ success: true, evaluation: saved });
+  } catch (err) {
+    console.error('TDDS analyze error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
 export async function evaluate(req, res) {
   try {

@@ -79,9 +79,20 @@ const SessionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
+<<<<<<< HEAD
     enum: ['pending', 'active', 'completed', 'cancelled'],
     default: 'pending'
   },
+=======
+    enum: ['pending', 'active', 'ongoing', 'completed', 'cancelled'],
+    default: 'pending'
+  },
+  /** Users who called PUT /session/:id/join (both required before status → ongoing). */
+  participantsJoined: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   scheduledAt: {
     type: Date
   },
@@ -106,6 +117,7 @@ const SessionSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+<<<<<<< HEAD
   barterSystem: {
     instructorTeachingWanted: {
       type: Boolean,
@@ -123,6 +135,12 @@ const SessionSchema = new mongoose.Schema({
       name: String
     }
   },
+=======
+  // Token Economy (v2): who taught whom flags, processed guard
+  a_taught_b: { type: Boolean, default: false },
+  b_taught_a: { type: Boolean, default: false },
+  tokensProcessed: { type: Boolean, default: false },
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   chatMessages: [MessageSchema],
   notes: [NoteSchema],
   feedback: {
@@ -169,6 +187,20 @@ const SessionSchema = new mongoose.Schema({
   endTime: Date
 });
 
+<<<<<<< HEAD
+=======
+SessionSchema.set('toJSON', { virtuals: true });
+SessionSchema.set('toObject', { virtuals: true });
+/** Creator / initiator (same as instructor). */
+SessionSchema.virtual('userA').get(function() {
+  return this.instructor;
+});
+/** Invited peer (same as learner). */
+SessionSchema.virtual('userB').get(function() {
+  return this.learner;
+});
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 // Index for efficient queries
 SessionSchema.index({ instructor: 1, status: 1 });
 SessionSchema.index({ learner: 1, status: 1 });
@@ -202,14 +234,28 @@ SessionSchema.methods.addNote = function(authorId, noteData) {
 };
 
 // Static method to find active sessions for user
+<<<<<<< HEAD
+=======
+const LIVE_SESSION_STATUSES = ['pending', 'active', 'ongoing'];
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 SessionSchema.statics.findActiveForUser = function(userId) {
   return this.find({
     $or: [
       { instructor: userId },
       { learner: userId }
     ],
+<<<<<<< HEAD
     status: { $in: ['pending', 'active'] }
   }).populate('instructor learner', 'name email avatar skills');
 };
 
+=======
+    status: { $in: LIVE_SESSION_STATUSES }
+  }).populate('instructor learner', 'name email avatar skills');
+};
+
+export { LIVE_SESSION_STATUSES };
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 export default mongoose.model('Session', SessionSchema);

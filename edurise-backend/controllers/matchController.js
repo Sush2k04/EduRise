@@ -1,4 +1,9 @@
 import Profile from '../models/Profile.js';
+<<<<<<< HEAD
+=======
+import Connection from '../models/Connection.js';
+import recommendationService from '../services/recommendationService.js';
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
 function calculateMatchScore(myProfile, otherProfile) {
   let score = 0;
@@ -56,7 +61,11 @@ export async function getMatches(req, res) {
       'name email rating tokens avatar distractionScore'
     );
 
+<<<<<<< HEAD
     const matches = otherProfiles
+=======
+    const recommended = otherProfiles
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
       .filter((p) => !!p?.user) // skip profiles with missing/deleted user reference
       .map((profile) => ({
         profile,
@@ -81,6 +90,41 @@ export async function getMatches(req, res) {
         distractionScore: match.profile.user.distractionScore ?? 0
       }));
 
+<<<<<<< HEAD
+=======
+    const otherIds = recommended.map((m) => m.userId);
+    const statusByUserId = {};
+
+    // Fetch existing connection state in a single query (both directions).
+    if (otherIds.length > 0) {
+      const connections = await Connection.find({
+        $or: [
+          { from: req.user.id, to: { $in: otherIds } },
+          { from: { $in: otherIds }, to: req.user.id }
+        ]
+      }).select('from to status');
+
+      for (const c of connections) {
+        const peerId =
+          String(c.from) === String(req.user.id) ? String(c.to) : String(c.from);
+
+        if (c.status === 'accepted') {
+          statusByUserId[peerId] = 'accepted';
+        } else if (c.status === 'pending' && statusByUserId[peerId] !== 'accepted') {
+          statusByUserId[peerId] = 'pending';
+        }
+      }
+    }
+
+    const maxScore = Math.max(...recommended.map((m) => m.score || 0), 1);
+    const matches = recommended.map((m) => ({
+      ...m,
+      connectionStatus: statusByUserId[String(m.userId)] || 'none',
+      // Provide a UI-friendly 0..100 badge without changing the existing `score`.
+      scores: { overall: Math.round(((m.score || 0) / maxScore) * 100) }
+    }));
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
     res.json(matches);
   } catch (error) {
     console.error('Match calculation error:', error);
@@ -88,3 +132,17 @@ export async function getMatches(req, res) {
   }
 }
 
+<<<<<<< HEAD
+=======
+// New AI recommendations endpoint (additive; does not break GET /api/match)
+export async function getRecommendations(req, res) {
+  try {
+    const recommendations = await recommendationService.getRecommendations(req.user.id, 10);
+    res.json({ success: true, recommendations });
+  } catch (err) {
+    console.error('Recommendation error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57

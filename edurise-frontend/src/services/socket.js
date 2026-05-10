@@ -34,3 +34,18 @@ export function onNotification(handler) {
   return () => s.off('notification', handler);
 }
 
+<<<<<<< HEAD
+=======
+export function onSessionInvite(handler) {
+  const s = getSocket();
+  s.on('session-invite', handler);
+  return () => s.off('session-invite', handler);
+}
+
+export function onSessionStarted(handler) {
+  const s = getSocket();
+  s.on('session-started', handler);
+  return () => s.off('session-started', handler);
+}
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57

@@ -29,7 +29,14 @@ const profileSchema = new mongoose.Schema({
     type: String,
     enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
     default: 'Intermediate'
+<<<<<<< HEAD
   }
+=======
+  },
+  // Enhanced TDDS (v2): running averages (0..1)
+  avgRelevanceScore: { type: Number, default: 0.5, min: 0, max: 1 },
+  avgDistractionScore: { type: Number, default: 0.5, min: 0, max: 1 }
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 }, { 
   timestamps: true 
 });

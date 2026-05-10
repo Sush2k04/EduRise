@@ -11,6 +11,10 @@ import sessionRoutes from './routes/session.js';
 import connectionRoutes from './routes/connection.js';
 import tddsRoutes from './routes/tdds.js';
 import notificationRoutes from './routes/notification.js';
+<<<<<<< HEAD
+=======
+import tokenRoutes from './routes/token.js';
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 import { registerSocketHandlers } from './sockets/index.js';
 import { setIO } from './sockets/io.js';
 
@@ -35,6 +39,10 @@ app.use('/api/session', sessionRoutes);
 app.use('/api/connection', connectionRoutes);
 app.use('/api/tdds', tddsRoutes);
 app.use('/api/notification', notificationRoutes);
+<<<<<<< HEAD
+=======
+app.use('/api/token', tokenRoutes);
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 
 const server = http.createServer(app);
 

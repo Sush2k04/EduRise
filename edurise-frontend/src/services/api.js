@@ -70,6 +70,11 @@ export const authAPI = {
 
   getMatches: () => apiCall('/match'),
 
+<<<<<<< HEAD
+=======
+  getRecommendations: () => apiCall('/match/recommendations'),
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   getAllProfiles: () => apiCall('/profile/all')
 };
 
@@ -87,6 +92,16 @@ export const sessionAPI = {
       body: JSON.stringify({ instructorId, skill, sessionType, scheduledDuration, scheduledAt, topic, tokenRate })
     }),
 
+<<<<<<< HEAD
+=======
+  /** Start a session with an accepted connection peer (you become instructor / session creator). */
+  startWithPeer: ({ peerUserId, topic, skill, sessionType, scheduledDuration, tokenRate } = {}) =>
+    apiCall('/session/start', {
+      method: 'POST',
+      body: JSON.stringify({ peerUserId, topic, skill, sessionType, scheduledDuration, tokenRate })
+    }),
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   getActive: () => apiCall('/session/active'),
 
   getById: (id) => apiCall(`/session/${id}`),
@@ -113,6 +128,12 @@ export const connectionAPI = {
   reject: (requestId) =>
     apiCall(`/connection/reject/${requestId}`, { method: 'PUT' }),
 
+<<<<<<< HEAD
+=======
+  remove: (userId) =>
+    apiCall(`/connection/remove/${userId}`, { method: 'DELETE' }),
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   getMine: () => apiCall('/connection/me')
 };
 
@@ -123,8 +144,19 @@ export const tddsAPI = {
       method: 'POST',
       body: JSON.stringify({ topic, transcript, sessionId })
     }),
+<<<<<<< HEAD
   me: () => apiCall('/tdds/me'),
   history: (limit = 20) => apiCall(`/tdds/history?limit=${encodeURIComponent(limit)}`),
+=======
+  analyzeSession: ({ sessionId, transcript, topic }) =>
+    apiCall('/tdds/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, transcript, topic })
+    }),
+  me: () => apiCall('/tdds/me'),
+  history: (limit = 20) => apiCall(`/tdds/history?limit=${encodeURIComponent(limit)}`),
+  getSessionEvaluation: (sessionId) => apiCall(`/tdds/session/${sessionId}`),
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   demo: ({ topic, transcript }) =>
     fetch(`${API_BASE_URL}/tdds/demo`, {
       method: 'POST',
@@ -139,6 +171,16 @@ export const tddsAPI = {
     })
 };
 
+<<<<<<< HEAD
+=======
+export const tokenAPI = {
+  getBalance: () => apiCall('/token/balance'),
+  getHistory: (limit = 20) => apiCall(`/token/history?limit=${encodeURIComponent(limit)}`),
+  markTeaching: (sessionId) =>
+    apiCall(`/token/session/${sessionId}/teach`, { method: 'POST' })
+};
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 export const notificationAPI = {
   listMine: (limit = 20) => apiCall(`/notification/me?limit=${encodeURIComponent(limit)}`),
   markRead: (id) => apiCall(`/notification/${id}/read`, { method: 'PUT' }),

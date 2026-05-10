@@ -1,4 +1,8 @@
 import Connection from '../models/Connection.js';
+<<<<<<< HEAD
+=======
+import User from '../models/User.js';
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
 import { getIO } from '../sockets/io.js';
 import Notification from '../models/Notification.js';
 
@@ -14,15 +18,34 @@ export async function sendRequest(req, res) {
     const conn = await Connection.create({ from, to, status: 'pending' });
 
     try {
+<<<<<<< HEAD
       await Notification.create({
         user: to,
         type: 'connection_request',
         payload: { requestId: conn._id, from, to }
+=======
+      const fromUser = await User.findById(from).select('name').lean();
+      const notificationPayload = { 
+        requestId: conn._id, 
+        from, 
+        to,
+        username: fromUser?.name || 'Someone'
+      };
+      
+      await Notification.create({
+        user: to,
+        type: 'connection_request',
+        payload: notificationPayload
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
       });
       const io = getIO();
       io?.to(`user:${to}`).emit('notification', {
         type: 'connection_request',
+<<<<<<< HEAD
         payload: { requestId: conn._id, from, to },
+=======
+        payload: notificationPayload,
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
         createdAt: new Date().toISOString()
       });
     } catch {
@@ -47,15 +70,34 @@ export async function acceptRequest(req, res) {
     await conn.save();
 
     try {
+<<<<<<< HEAD
       await Notification.create({
         user: conn.from,
         type: 'connection_accepted',
         payload: { requestId: conn._id, from: conn.from, to: conn.to }
+=======
+      const toUser = await User.findById(conn.to).select('name').lean();
+      const notificationPayload = { 
+        requestId: conn._id, 
+        from: conn.from, 
+        to: conn.to,
+        username: toUser?.name || 'Someone'
+      };
+      
+      await Notification.create({
+        user: conn.from,
+        type: 'connection_accepted',
+        payload: notificationPayload
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
       });
       const io = getIO();
       io?.to(`user:${conn.from.toString()}`).emit('notification', {
         type: 'connection_accepted',
+<<<<<<< HEAD
         payload: { requestId: conn._id, from: conn.from, to: conn.to },
+=======
+        payload: notificationPayload,
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
         createdAt: new Date().toISOString()
       });
     } catch {
@@ -123,3 +165,38 @@ export async function getMyConnections(req, res) {
   }
 }
 
+<<<<<<< HEAD
+=======
+export async function removeConnection(req, res) {
+  try {
+    const currentUserId = req.user.id;
+    const otherUserId = req.params.userId;
+
+    if (otherUserId === currentUserId) {
+      return res.status(400).json({ msg: 'Cannot remove connection with yourself' });
+    }
+
+    // Find connection where user is either from or to
+    const conn = await Connection.findOne({
+      status: 'accepted',
+      $or: [
+        { from: currentUserId, to: otherUserId },
+        { from: otherUserId, to: currentUserId }
+      ]
+    });
+
+    if (!conn) {
+      return res.status(404).json({ msg: 'Connection not found' });
+    }
+
+    // Delete the connection
+    await Connection.deleteOne({ _id: conn._id });
+
+    res.json({ msg: 'Connection removed successfully', connectionId: conn._id });
+  } catch (e) {
+    console.error('Connection remove error:', e);
+    res.status(500).json({ msg: 'Server error' });
+  }
+}
+
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57

@@ -37,6 +37,13 @@ const userSchema = new mongoose.Schema({
     type: Number, 
     default: 5 
   },
+<<<<<<< HEAD
+=======
+  // Token Economy (v2). Kept alongside legacy `tokens` for backwards compatibility.
+  tokenBalance: { type: Number, default: 5 },
+  totalEarned: { type: Number, default: 0 },
+  totalSpent: { type: Number, default: 0 },
+>>>>>>> c48c849cba07a5bb33088cacfb4fde688b8a5a57
   rating: { 
     type: Number, 
     default: 5,
